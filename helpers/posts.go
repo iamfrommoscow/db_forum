@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/iamfrommoscow/db_forum/database"
@@ -78,18 +79,46 @@ AND parent = $3`
 const descByTimePost = `
 ORDER BY created, id DESC`
 
-func GetPostsTree(slug int, limit []byte, sort []byte, parent int) []*models.Post {
+const descByIdPost = `
+ORDER BY id DESC`
+
+const sinceQueryPost = `
+AND id > `
+
+func GetPostsTree(slug int, limit []byte, sort []byte, desc []byte, since []byte, parent int) []*models.Post {
 	var posts []*models.Post
 	transaction := database.StartTransaction()
 	defer transaction.Commit()
-	QueryString := selectPostsByThread + withParent + ascByTime
+	QueryString := selectPostsByThread + withParent
+	if len(since) > 0 {
+		QueryString += sinceQueryPost + ` $4`
+	}
+
+	if string(desc) == "true" && (parent == 0 || string(sort) == "tree") {
+		QueryString += descByIdPost
+	} else {
+		QueryString += ascByTime
+	}
 	if len(limit) > 0 {
 		QueryString += limitQuery
 	}
 	var elements *pgx.Rows
 	var err error
+	if len(since) > 0 {
+		fmt.Println(QueryString)
+		fmt.Println("$1", slug)
+		fmt.Println("$2", string(limit))
+		fmt.Println("$3", parent)
+		fmt.Println("$4", string(since))
 
-	elements, err = transaction.Query(QueryString, slug, string(limit), parent)
+		elements, err = transaction.Query(QueryString, slug, string(limit), parent, string(since))
+		if elements.Next() == false {
+
+		}
+	} else {
+		elements, err = transaction.Query(QueryString, slug, string(limit), parent)
+	}
+
 	if err != nil {
 
 		// fmt.Println(slug)
@@ -117,9 +146,20 @@ func GetPostsTree(slug int, limit []byte, sort []byte, parent int) []*models.Pos
 				return posts
 			}
 			post.Created = created.Format("2006-01-02T15:04:05.000Z07:00")
-
-			posts = append(posts, &post)
-			posts = append(posts, GetPostsTree(slug, limit, sort, post.ID)...)
+			if string(desc) == "true" && string(sort) == "tree" {
+				posts = append(posts, GetPostsTree(slug, limit, sort, desc, since, post.ID)...)
+				posts = append(posts, &post)
+			} else {
+				posts = append(posts, &post)
+				posts = append(posts, GetPostsTree(slug, limit, sort, desc, since, post.ID)...)
+			}
+			lim, _ := strconv.Atoi(string(limit))
+			if len(limit) > 0 {
+				if len(posts) >= lim {
+					posts = posts[:lim]
+					return posts
+				}
+			}
 
 		}
 
@@ -130,23 +170,26 @@ func GetPostsTree(slug int, limit []byte, sort []byte, parent int) []*models.Pos
 func GetPostsByThread(slug int, limit []byte, sort []byte, since []byte, desc []byte) []*models.Post {
 	var posts []*models.Post
 	if string(sort) == "tree" {
-		posts = GetPostsTree(slug, limit, sort, 0)
+		posts = GetPostsTree(slug, limit, sort, desc, since, 0)
 		return posts
 	}
 	if string(sort) == "parent_tree" {
-		posts = GetPostsTree(slug, limit, sort, 0)
+		posts = GetPostsTree(slug, limit, sort, desc, since, 0)
 		return posts
 	}
 	transaction := database.StartTransaction()
 	defer transaction.Commit()
 
 	QueryString := selectPostsByThread
+	if len(since) > 0 {
+		QueryString += sinceQueryPost + ` $3`
+
+	}
 	if string(desc) == "true" {
 		// if len(since) > 0 {
 		// 	QueryString += sinceQueryTrue
 		// }
-		// QueryString += descByTimePost
-		return posts
+		QueryString += descByIdPost
 	} else {
 		QueryString += ascByTime
 	}
@@ -155,7 +198,13 @@ func GetPostsByThread(slug int, limit []byte, sort []byte, since []byte, desc []
 	}
 	var elements *pgx.Rows
 	var err error
-	elements, err = transaction.Query(QueryString, slug, string(limit))
+	if len(since) > 0 {
+
+		elements, err = transaction.Query(QueryString, slug, string(limit), string(since))
+	} else {
+		elements, err = transaction.Query(QueryString, slug, string(limit))
+	}
+
 	if err != nil {
 
 		// fmt.Println(slug)
