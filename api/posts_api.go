@@ -80,7 +80,7 @@ func CreatePost(ctx *fasthttp.RequestCtx) {
 
 func GetPostsByThread(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json")
-	limit, sort := ctx.QueryArgs().Peek("limit"), ctx.QueryArgs().Peek("sort")
+	limit, sort, since, desc := ctx.QueryArgs().Peek("limit"), ctx.QueryArgs().Peek("sort"), ctx.QueryArgs().Peek("since"), ctx.QueryArgs().Peek("desc")
 	slug := ctx.UserValue("slug").(string)
 	var thread *models.Thread
 
@@ -104,7 +104,7 @@ func GetPostsByThread(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	posts := helpers.GetPostsByThread(thread.ID, limit, sort)
+	posts := helpers.GetPostsByThread(thread.ID, limit, sort, since, desc)
 	if len(posts) == 0 {
 		posts = make([]*models.Post, 0)
 

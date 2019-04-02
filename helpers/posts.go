@@ -72,12 +72,82 @@ SELECT 	author,
 FROM posts 
 WHERE thread = $1`
 
-func GetPostsByThread(slug int, limit []byte, sort []byte) []*models.Post {
+const withParent = `
+AND parent = $3`
+
+const descByTimePost = `
+ORDER BY created, id DESC`
+
+func GetPostsTree(slug int, limit []byte, sort []byte, parent int) []*models.Post {
 	var posts []*models.Post
 	transaction := database.StartTransaction()
 	defer transaction.Commit()
+	QueryString := selectPostsByThread + withParent + ascByTime
+	if len(limit) > 0 {
+		QueryString += limitQuery
+	}
+	var elements *pgx.Rows
+	var err error
+
+	elements, err = transaction.Query(QueryString, slug, string(limit), parent)
+	if err != nil {
+
+		// fmt.Println(slug)
+		// fmt.Println(string(limit))
+		// fmt.Println("Я в ошибке")
+		fmt.Println(err)
+		// log.Fatal(err)
+		return posts
+	} else {
+
+		for elements.Next() {
+
+			var post models.Post
+			var created time.Time
+			if err := elements.Scan(
+				&post.Author,
+				&created,
+				&post.Forum,
+				&post.Message,
+				&post.Parent,
+				&post.Thread,
+				&post.ID); err != nil {
+				fmt.Println(err)
+
+				return posts
+			}
+			post.Created = created.Format("2006-01-02T15:04:05.000Z07:00")
+
+			posts = append(posts, &post)
+			posts = append(posts, GetPostsTree(slug, limit, sort, post.ID)...)
+
+		}
+
+	}
+	return posts
+}
+
+func GetPostsByThread(slug int, limit []byte, sort []byte, since []byte, desc []byte) []*models.Post {
+	var posts []*models.Post
+	if string(sort) == "tree" {
+		posts = GetPostsTree(slug, limit, sort, 0)
+		return posts
+	}
+	if string(sort) == "parent_tree" {
+		posts = GetPostsTree(slug, limit, sort, 0)
+		return posts
+	}
+	transaction := database.StartTransaction()
+	defer transaction.Commit()
+
 	QueryString := selectPostsByThread
-	if len(sort) > 0 {
+	if string(desc) == "true" {
+		// if len(since) > 0 {
+		// 	QueryString += sinceQueryTrue
+		// }
+		// QueryString += descByTimePost
+		return posts
+	} else {
 		QueryString += ascByTime
 	}
 	if len(limit) > 0 {
@@ -91,6 +161,8 @@ func GetPostsByThread(slug int, limit []byte, sort []byte) []*models.Post {
 		// fmt.Println(slug)
 		// fmt.Println(string(limit))
 		// fmt.Println("Я в ошибке")
+		fmt.Println("")
+		fmt.Println(QueryString)
 		fmt.Println(err)
 		// log.Fatal(err)
 		return posts

@@ -97,7 +97,7 @@ const descByTime = `
 ORDER BY created DESC`
 
 const ascByTime = `
-ORDER BY created`
+ORDER BY created, id`
 
 const limitQuery = `
 LIMIT $2`
