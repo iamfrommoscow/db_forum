@@ -42,6 +42,8 @@ func main() {
 	router.POST("/api/forum/*slug", api.CreateThread)
 
 	router.GET("/api/thread/:slug/details", api.GetThreadDetails)
+	router.POST("/api/thread/:slug/create", api.CreatePost)
+	router.GET("/api/thread/:slug/posts", api.GetPostsByThread)
 
 	Connect()
 	if err := fasthttp.ListenAndServe(":5000", router.Handler); err != nil {

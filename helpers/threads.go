@@ -2,10 +2,12 @@ package helpers
 
 import (
 	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/iamfrommoscow/db_forum/database"
 	"github.com/iamfrommoscow/db_forum/models"
+	"github.com/jackc/pgx"
 )
 
 const insertThread = `
@@ -34,6 +36,7 @@ SET threads = threads + 1
 WHERE slug = $1`
 const selectCount = `SELECT COUNT(*) FROM threads`
 
+//int лишняя
 func CreateThread(thread *models.Thread) (int, error) {
 	transaction := database.StartTransaction()
 	defer transaction.Commit()
@@ -51,7 +54,18 @@ func CreateThread(thread *models.Thread) (int, error) {
 	}
 
 	if _, err := transaction.Exec(insertThread, thread.Author, created, thread.Forum, thread.Message, thread.Title, thread.Slug, threadID); err != nil {
+		// fmt.Println("Thread:")
+		// fmt.Println(thread.Author)
+		// fmt.Println(created)
+		// fmt.Println(thread.Forum)
+		// fmt.Println(thread.Message)
+		// fmt.Println(thread.Title)
+		// fmt.Println(thread.Slug)
+		// fmt.Println(threadID)
+		// fmt.Println("")
 		fmt.Println(err)
+		// log.Fatal(err)
+
 		return threadID, err
 	}
 	if _, err := transaction.Exec(iterateThreads, thread.Forum); err != nil {
@@ -71,40 +85,86 @@ SELECT 	author,
 		slug,
 		id 
 FROM threads 
-WHERE forum = $1
-`
+WHERE forum = $1`
+
+const sinceQueryTrue = `
+AND created <= $3`
+
+const sinceQueryFalse = `
+AND created >= $3`
 
 const descByTime = `
 ORDER BY created DESC`
 
+const ascByTime = `
+ORDER BY created`
+
 const limitQuery = `
 LIMIT $2`
 
-func GetThreadsByForum(slug string, limit []byte, desc []byte) []*models.Thread {
+func GetThreadsByForum(slug string, limit []byte, desc []byte, since []byte) []*models.Thread {
 	var threads []*models.Thread
 	transaction := database.StartTransaction()
 	defer transaction.Commit()
-	if elements, err := transaction.Query(selectByLimit+descByTime+limitQuery, slug, limit); err != nil {
+	QueryString := selectByLimit
+
+	if string(desc) == "true" {
+		if len(since) > 0 {
+			QueryString += sinceQueryTrue
+		}
+		QueryString += descByTime
+	} else {
+		if len(since) > 0 {
+			QueryString += sinceQueryFalse
+		}
+		QueryString += ascByTime
+	}
+	if len(limit) > 0 {
+		QueryString += limitQuery
+	}
+	var elements *pgx.Rows
+	var err error
+	if len(since) > 0 {
+		elements, err = transaction.Query(QueryString, slug, string(limit), string(since))
+	} else {
+
+		elements, err = transaction.Query(QueryString, slug, string(limit))
+
+	}
+	if err != nil {
+
+		// fmt.Println(slug)
+		// fmt.Println(string(limit))
+		// fmt.Println("Я в ошибке")
+		fmt.Println(reflect.TypeOf(elements))
 		fmt.Println(err)
+		// log.Fatal(err)
 		return threads
 	} else {
+
 		for elements.Next() {
+
 			var thread models.Thread
+			var created time.Time
 			if err := elements.Scan(
 				&thread.Author,
-				&thread.Created,
+				&created,
 				&thread.Forum,
 				&thread.Message,
 				&thread.Title,
 				&thread.Slug,
 				&thread.ID); err != nil {
+				fmt.Println(err)
+
 				return threads
 			}
+			thread.Created = created.Format("2006-01-02T15:04:05.000Z07:00")
+
 			threads = append(threads, &thread)
 
 		}
-	}
 
+	}
 	return threads
 }
 
@@ -150,7 +210,6 @@ func GetThreadByID(id string) *models.Thread {
 	var thread models.Thread
 	var created time.Time
 	if err := transaction.QueryRow(selectThreadByID, id).Scan(&thread.Author, &created, &thread.Forum, &thread.Message, &thread.Title, &thread.Slug, &thread.ID); err != nil {
-		fmt.Println(err)
 		return nil
 	} else {
 		thread.Created = created.Format("2006-01-02T15:04:05.000Z07:00")

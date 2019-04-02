@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"strconv"
 
 	"github.com/iamfrommoscow/db_forum/helpers"
@@ -38,6 +37,8 @@ func CreateThread(ctx *fasthttp.RequestCtx) {
 		}
 		return
 	}
+
+	newThread.Forum = slug
 	user := helpers.FindByNickname(newThread.Author)
 	if user == nil {
 		var errorMessage = models.Error{
@@ -51,25 +52,51 @@ func CreateThread(ctx *fasthttp.RequestCtx) {
 		}
 		return
 	}
-	if threadID, err := helpers.CreateThread(&newThread); err == nil {
-		newThread.ID = threadID
-		forum := helpers.FindBySlug(newThread.Forum)
-		newThread.Forum = forum.Slug
-		if respBody, err := json.Marshal(newThread); err != nil {
+
+	// fmt.Println("")
+	// fmt.Println(newThread.Author)
+	// fmt.Println(newThread.Forum)
+	// fmt.Println(newThread.Message)
+	// fmt.Println(newThread.Title)
+	// fmt.Println(newThread.Slug)
+	// fmt.Println("URI", string(ctx.RequestURI()))
+	// fmt.Println("")
+	var foundThread *models.Thread
+	if newThread.Slug != "" {
+		foundThread = helpers.GetThreadBySlug(newThread.Slug)
+	}
+	if foundThread == nil {
+
+		if threadID, err := helpers.CreateThread(&newThread); err == nil {
+			newThread.ID = threadID
+			forum := helpers.FindBySlug(newThread.Forum)
+			newThread.Forum = forum.Slug
+			if respBody, err := json.Marshal(newThread); err != nil {
+				sendInternalError(ctx, err)
+			} else {
+				ctx.SetStatusCode(fasthttp.StatusCreated)
+				ctx.Write(respBody)
+			}
+		}
+	} else {
+
+		if respBody, err := json.Marshal(foundThread); err != nil {
 			sendInternalError(ctx, err)
 		} else {
-			ctx.SetStatusCode(fasthttp.StatusCreated)
+			ctx.SetStatusCode(fasthttp.StatusConflict)
 			ctx.Write(respBody)
 		}
+		return
 	}
 
 }
 
 func GetThreadsByForum(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json")
-	limit, desc := ctx.QueryArgs().Peek("limit"), ctx.QueryArgs().Peek("desc")
+	limit, desc, since := ctx.QueryArgs().Peek("limit"), ctx.QueryArgs().Peek("desc"), ctx.QueryArgs().Peek("since")
 	slug := ctx.UserValue("slug").(string)
 	forum := helpers.FindBySlug(slug)
+	// fmt.Println(since)
 	if forum == nil {
 		var errorMessage = models.Error{
 			Message: "Can't find forum by slug:" + slug,
@@ -82,14 +109,17 @@ func GetThreadsByForum(ctx *fasthttp.RequestCtx) {
 		}
 		return
 	}
+	threads := helpers.GetThreadsByForum(slug, limit, desc, since)
+	if len(threads) == 0 {
+		threads = make([]*models.Thread, 0)
 
-	threads := helpers.GetThreadsByForum(slug, limit, desc)
+	}
 	if respBody, err := json.Marshal(threads); err != nil {
 
 		sendInternalError(ctx, err)
 	} else {
-		ctx.SetStatusCode(fasthttp.StatusOK)
 		ctx.Write(respBody)
+		ctx.SetStatusCode(fasthttp.StatusOK)
 	}
 }
 
@@ -97,14 +127,11 @@ func GetThreadDetails(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json")
 	slug := ctx.UserValue("slug").(string)
 	var thread *models.Thread
-	fmt.Println(slug, ":")
 
 	if _, err := strconv.Atoi(slug); err == nil {
 		thread = helpers.GetThreadByID(slug)
-		fmt.Println("by id")
 	} else {
 		thread = helpers.GetThreadBySlug(slug)
-		fmt.Println("by slug")
 
 	}
 
