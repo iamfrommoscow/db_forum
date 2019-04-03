@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -150,6 +151,7 @@ func GetPostsByThread(ctx *fasthttp.RequestCtx) {
 
 func GetPost(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json")
+	related := ctx.QueryArgs().Peek("related")
 	id, err := strconv.Atoi(ctx.UserValue("id").(string))
 	if err != nil {
 		sendInternalError(ctx, err)
@@ -171,6 +173,37 @@ func GetPost(ctx *fasthttp.RequestCtx) {
 	}
 	var rPost models.ReturnPost
 	rPost.Pst = post
+
+	if string(related) == "user" {
+		user := helpers.FindByNickname(post.Author)
+		fmt.Println("user", user)
+		rPost.Author = user
+		if respBody, err := json.Marshal(rPost); err != nil {
+
+			sendInternalError(ctx, err)
+		} else {
+			ctx.Write(respBody)
+			ctx.SetStatusCode(fasthttp.StatusOK)
+		}
+		return
+	}
+
+	if string(related) == "thread" {
+		fmt.Println("thread", post.Thread)
+
+		thread := helpers.GetThreadByID(strconv.Itoa(post.Thread))
+		fmt.Println("thread", thread)
+		rPost.Thrd = thread
+		if respBody, err := json.Marshal(rPost); err != nil {
+
+			sendInternalError(ctx, err)
+		} else {
+			ctx.Write(respBody)
+			ctx.SetStatusCode(fasthttp.StatusOK)
+		}
+		return
+	}
+
 	if respBody, err := json.Marshal(rPost); err != nil {
 
 		sendInternalError(ctx, err)
@@ -182,6 +215,7 @@ func GetPost(ctx *fasthttp.RequestCtx) {
 
 func UpdatePost(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json")
+	related := ctx.QueryArgs().Peek("related")
 	id, err := strconv.Atoi(ctx.UserValue("id").(string))
 	if err != nil {
 		sendInternalError(ctx, err)
@@ -191,7 +225,13 @@ func UpdatePost(ctx *fasthttp.RequestCtx) {
 	if err := json.Unmarshal(ctx.PostBody(), &newPost); err != nil {
 		sendInternalError(ctx, err)
 	}
-	post := helpers.UpdatePostById(id, newPost.Message)
+	var post *models.Post
+	if newPost.Message == "" {
+		post = helpers.GetPostById(id)
+	} else {
+		post = helpers.UpdatePostById(id, newPost.Message)
+
+	}
 
 	if post == nil {
 		var errorMessage = models.Error{
@@ -207,7 +247,36 @@ func UpdatePost(ctx *fasthttp.RequestCtx) {
 	}
 	var rPost models.ReturnPost
 	rPost.Pst = post
-	if respBody, err := json.Marshal(rPost); err != nil {
+
+	if string(related) == "user" {
+		user := helpers.FindByNickname(post.Author)
+		fmt.Println("user", user)
+		rPost.Author = user
+		if respBody, err := json.Marshal(rPost); err != nil {
+
+			sendInternalError(ctx, err)
+		} else {
+			ctx.Write(respBody)
+			ctx.SetStatusCode(fasthttp.StatusOK)
+		}
+		return
+	}
+
+	if string(related) == "thread" {
+		thread := helpers.GetThreadByID(strconv.Itoa(post.Thread))
+		fmt.Println("thread", thread)
+		rPost.Thrd = thread
+		if respBody, err := json.Marshal(rPost); err != nil {
+
+			sendInternalError(ctx, err)
+		} else {
+			ctx.Write(respBody)
+			ctx.SetStatusCode(fasthttp.StatusOK)
+		}
+		return
+	}
+
+	if respBody, err := json.Marshal(post); err != nil {
 
 		sendInternalError(ctx, err)
 	} else {

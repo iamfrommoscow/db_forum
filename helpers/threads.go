@@ -210,6 +210,7 @@ func GetThreadByID(id string) *models.Thread {
 	var thread models.Thread
 	var created time.Time
 	if err := transaction.QueryRow(selectThreadByID, id).Scan(&thread.Author, &created, &thread.Forum, &thread.Message, &thread.Title, &thread.Slug, &thread.ID); err != nil {
+		fmt.Println(err)
 		return nil
 	} else {
 		thread.Created = created.Format("2006-01-02T15:04:05.000Z07:00")

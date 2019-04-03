@@ -12,5 +12,7 @@ type Post struct {
 }
 
 type ReturnPost struct {
-	Pst *Post `json:"post"`
+	Pst    *Post   `json:"post"`
+	Author *User   `json:"author,omitempty"`
+	Thrd   *Thread `json:"thread,omitempty"`
 }
