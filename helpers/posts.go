@@ -280,3 +280,28 @@ func GetPostsByThread(slug int, limit []byte, sort []byte, since []byte, desc []
 	}
 	return posts
 }
+
+const selectPostByID = `
+SELECT author,
+		created,
+		forum,
+		message,
+		thread,
+		parent,
+		id
+FROM posts
+WHERE id = $1`
+
+func GetPostById(id int) *models.Post {
+	transaction := database.StartTransaction()
+	defer transaction.Commit()
+	var post models.Post
+	var created time.Time
+	if err := transaction.QueryRow(selectPostByID, id).Scan(&post.Author, &created, &post.Forum, &post.Message, &post.Thread, &post.Parent, &post.ID); err != nil {
+		fmt.Println(err)
+		return nil
+	} else {
+		post.Created = created.Format("2006-01-02T15:04:05.000Z07:00")
+		return &post
+	}
+}

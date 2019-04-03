@@ -67,6 +67,36 @@ func CreatePost(ctx *fasthttp.RequestCtx) {
 			}
 			return
 		}
+		if post.Parent != 0 {
+			parent := helpers.GetPostById(post.Parent)
+			if parent == nil {
+
+				var errorMessage = models.Error{
+					Message: "Parent post was created in another thread",
+				}
+				if respBody, err := json.Marshal(errorMessage); err != nil {
+					sendInternalError(ctx, err)
+				} else {
+					ctx.SetStatusCode(fasthttp.StatusConflict)
+					ctx.Write(respBody)
+				}
+				return
+			}
+			if parent.Thread != post.Thread {
+
+				var errorMessage = models.Error{
+					Message: "Parent post was created in another thread",
+				}
+				if respBody, err := json.Marshal(errorMessage); err != nil {
+					sendInternalError(ctx, err)
+				} else {
+					ctx.SetStatusCode(fasthttp.StatusConflict)
+					ctx.Write(respBody)
+				}
+				return
+			}
+		}
+
 	}
 	if err := helpers.InsertPosts(newPosts); err == nil {
 		if respBody, err := json.Marshal(newPosts); err != nil {
