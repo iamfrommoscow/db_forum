@@ -166,11 +166,12 @@ func GetPostsTree(slug int, limit []byte, sort []byte, desc []byte, since []byte
 	return posts
 }
 
-func PostsSortSince(posts []*models.Post, limit []byte, since []byte) []*models.Post {
+func PostsSortSince(posts []*models.Post, limit []byte, since []byte, sort []byte) []*models.Post {
 	lim, _ := strconv.Atoi(string(limit))
 	sin, _ := strconv.Atoi(string(since))
 	// fmt.Println(lim)
 	// fmt.Println(sin)
+
 	for id, post := range posts {
 		if post.ID == sin {
 			// fmt.Println("")
@@ -178,7 +179,7 @@ func PostsSortSince(posts []*models.Post, limit []byte, since []byte) []*models.
 			// fmt.Println(posts[id+2].ID)
 			// fmt.Println(posts[id+3].ID)
 			posts = posts[id+1:]
-			if len(posts) > lim {
+			if len(posts) > lim && string(sort) != "parent_tree" {
 				posts = posts[:lim]
 
 			}
@@ -200,16 +201,15 @@ func GetPostsByThread(slug int, limit []byte, sort []byte, since []byte, desc []
 		posts = GetPostsTree(slug, limit, sort, desc, since, 0)
 		if len(since) > 0 {
 			// fmt.Println(posts)
-			posts = PostsSortSince(posts, limit, since)
+			posts = PostsSortSince(posts, limit, since, sort)
 		}
 		return posts
 	}
 	if string(sort) == "parent_tree" {
 		posts = GetPostsTree(slug, limit, sort, desc, since, 0)
-
 		if len(since) > 0 {
 
-			posts = PostsSortSince(posts, limit, since)
+			posts = PostsSortSince(posts, limit, since, sort)
 
 		}
 		return posts
