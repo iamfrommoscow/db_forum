@@ -46,7 +46,7 @@ func main() {
 	router.POST("/api/thread/:slug/details", api.UpdateThread)
 	router.POST("/api/thread/:slug/create", api.CreatePost)
 	router.GET("/api/thread/:slug/posts", api.GetPostsByThread)
-	router.GET("/api/thread/:slug/vote", api.VoteForThread)
+	router.POST("/api/thread/:slug/vote", api.VoteForThread)
 
 	router.GET("/api/post/:id/details", api.GetPost)
 	router.POST("/api/post/:id/details", api.UpdatePost)

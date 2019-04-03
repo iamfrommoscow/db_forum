@@ -15,4 +15,5 @@ type ReturnPost struct {
 	Pst    *Post   `json:"post"`
 	Author *User   `json:"author,omitempty"`
 	Thrd   *Thread `json:"thread,omitempty"`
+	Frm    *Forum  `json:"forum,omitempty"`
 }

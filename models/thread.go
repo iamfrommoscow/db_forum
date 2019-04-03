@@ -8,4 +8,5 @@ type Thread struct {
 	Title   string `json:"title"`
 	Slug    string `json:"slug"`
 	ID      int    `json:"id"`
+	Votes   int    `json:"votes"`
 }
