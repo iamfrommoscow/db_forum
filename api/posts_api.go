@@ -147,3 +147,71 @@ func GetPostsByThread(ctx *fasthttp.RequestCtx) {
 		ctx.SetStatusCode(fasthttp.StatusOK)
 	}
 }
+
+func GetPost(ctx *fasthttp.RequestCtx) {
+	ctx.SetContentType("application/json")
+	id, err := strconv.Atoi(ctx.UserValue("id").(string))
+	if err != nil {
+		sendInternalError(ctx, err)
+		return
+	}
+	post := helpers.GetPostById(id)
+
+	if post == nil {
+		var errorMessage = models.Error{
+			Message: "Can't find post by id:" + string(id),
+		}
+		if respBody, err := json.Marshal(errorMessage); err != nil {
+			sendInternalError(ctx, err)
+		} else {
+			ctx.SetStatusCode(fasthttp.StatusNotFound)
+			ctx.Write(respBody)
+		}
+		return
+	}
+	var rPost models.ReturnPost
+	rPost.Pst = post
+	if respBody, err := json.Marshal(rPost); err != nil {
+
+		sendInternalError(ctx, err)
+	} else {
+		ctx.Write(respBody)
+		ctx.SetStatusCode(fasthttp.StatusOK)
+	}
+}
+
+func UpdatePost(ctx *fasthttp.RequestCtx) {
+	ctx.SetContentType("application/json")
+	id, err := strconv.Atoi(ctx.UserValue("id").(string))
+	if err != nil {
+		sendInternalError(ctx, err)
+		return
+	}
+	var newPost *models.Post
+	if err := json.Unmarshal(ctx.PostBody(), &newPost); err != nil {
+		sendInternalError(ctx, err)
+	}
+	post := helpers.UpdatePostById(id, newPost.Message)
+
+	if post == nil {
+		var errorMessage = models.Error{
+			Message: "Can't find post by id:" + string(id),
+		}
+		if respBody, err := json.Marshal(errorMessage); err != nil {
+			sendInternalError(ctx, err)
+		} else {
+			ctx.SetStatusCode(fasthttp.StatusNotFound)
+			ctx.Write(respBody)
+		}
+		return
+	}
+	var rPost models.ReturnPost
+	rPost.Pst = post
+	if respBody, err := json.Marshal(rPost); err != nil {
+
+		sendInternalError(ctx, err)
+	} else {
+		ctx.Write(respBody)
+		ctx.SetStatusCode(fasthttp.StatusOK)
+	}
+}

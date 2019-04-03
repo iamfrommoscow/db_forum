@@ -48,6 +48,9 @@ func main() {
 	router.GET("/api/thread/:slug/posts", api.GetPostsByThread)
 	router.GET("/api/thread/:slug/vote", api.VoteForThread)
 
+	router.GET("/api/post/:id/details", api.GetPost)
+	router.POST("/api/post/:id/details", api.UpdatePost)
+
 	Connect()
 	if err := fasthttp.ListenAndServe(":5000", router.Handler); err != nil {
 		log.Fatalf("error in ListenAndServe: %s", err)

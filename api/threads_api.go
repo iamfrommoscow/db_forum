@@ -212,6 +212,13 @@ func UpdateThread(ctx *fasthttp.RequestCtx) {
 	if err := json.Unmarshal(ctx.PostBody(), &newThread); err != nil {
 
 	}
+	if newThread.Message == "" {
+		newThread.Message = thread.Message
+	}
+	if newThread.Title == "" {
+		newThread.Title = thread.Title
+	}
+
 	if _, err := strconv.Atoi(slug); err == nil {
 		thread = helpers.UpdateThreadByID(slug, newThread.Message, newThread.Title)
 	} else {
