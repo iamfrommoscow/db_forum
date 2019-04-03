@@ -1,6 +1,8 @@
 package helpers
 
 import (
+	"fmt"
+
 	"github.com/iamfrommoscow/db_forum/database"
 	"github.com/iamfrommoscow/db_forum/models"
 )
@@ -39,5 +41,37 @@ func FindBySlug(slug string) *models.Forum {
 		return nil
 	} else {
 		return &forum
+	}
+}
+
+const postsCount = `
+SELECT COUNT(*) FROM posts 
+WHERE forum = $1`
+
+func GetPostsCountByForum(slug string) int {
+	transaction := database.StartTransaction()
+	defer transaction.Commit()
+	var count int
+	if err := transaction.QueryRow(postsCount, slug).Scan(&count); err != nil {
+		fmt.Println(err)
+		return 0
+	} else {
+		return count
+	}
+}
+
+const threadsCount = `
+SELECT COUNT(*) FROM threads 
+WHERE forum = $1`
+
+func GetThreadsCountByForum(slug string) int {
+	transaction := database.StartTransaction()
+	defer transaction.Commit()
+	var count int
+	if err := transaction.QueryRow(threadsCount, slug).Scan(&count); err != nil {
+		fmt.Println(err)
+		return 0
+	} else {
+		return count
 	}
 }

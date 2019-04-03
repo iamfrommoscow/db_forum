@@ -64,6 +64,8 @@ func GetForum(ctx *fasthttp.RequestCtx) {
 		}
 		return
 	}
+	forum.Posts = helpers.GetPostsCountByForum(forum.Slug)
+	forum.Threads = helpers.GetThreadsCountByForum(forum.Slug)
 	if respBody, err := json.Marshal(forum); err != nil {
 
 		sendInternalError(ctx, err)

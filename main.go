@@ -38,6 +38,7 @@ func main() {
 	router.POST("/api/user/:nickname/profile", api.UpdateProfile)
 
 	router.GET("/api/forum/:slug/details", api.GetForum)
+	// router.GET("/api/forum/:slug/users", api.GetUsersByForum)
 	router.GET("/api/forum/:slug/threads", api.GetThreadsByForum)
 	router.POST("/api/forum/*slug", api.CreateThread)
 
