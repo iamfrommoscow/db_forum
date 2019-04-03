@@ -156,3 +156,74 @@ func GetThreadDetails(ctx *fasthttp.RequestCtx) {
 		ctx.Write(respBody)
 	}
 }
+
+func VoteForThread(ctx *fasthttp.RequestCtx) {
+	ctx.SetContentType("application/json")
+	slug := ctx.UserValue("slug").(string)
+	var thread *models.Thread
+
+	if _, err := strconv.Atoi(slug); err == nil {
+		thread = helpers.GetThreadByID(slug)
+	} else {
+		thread = helpers.GetThreadBySlug(slug)
+
+	}
+
+	if thread == nil {
+		var errorMessage = models.Error{
+			Message: "Can't find thread by slug:" + slug,
+		}
+		if respBody, err := json.Marshal(errorMessage); err != nil {
+			sendInternalError(ctx, err)
+		} else {
+			ctx.SetStatusCode(fasthttp.StatusNotFound)
+			ctx.Write(respBody)
+		}
+		return
+	}
+	ctx.SetStatusCode(fasthttp.StatusOK)
+}
+
+func UpdateThread(ctx *fasthttp.RequestCtx) {
+	ctx.SetContentType("application/json")
+	slug := ctx.UserValue("slug").(string)
+	var thread *models.Thread
+
+	if _, err := strconv.Atoi(slug); err == nil {
+		thread = helpers.GetThreadByID(slug)
+	} else {
+		thread = helpers.GetThreadBySlug(slug)
+
+	}
+
+	if thread == nil {
+		var errorMessage = models.Error{
+			Message: "Can't find thread by slug:" + slug,
+		}
+		if respBody, err := json.Marshal(errorMessage); err != nil {
+			sendInternalError(ctx, err)
+		} else {
+			ctx.SetStatusCode(fasthttp.StatusNotFound)
+			ctx.Write(respBody)
+		}
+		return
+	}
+	var newThread models.Thread
+	if err := json.Unmarshal(ctx.PostBody(), &newThread); err != nil {
+
+	}
+	if _, err := strconv.Atoi(slug); err == nil {
+		thread = helpers.UpdateThreadByID(slug, newThread.Message, newThread.Title)
+	} else {
+		thread = helpers.UpdateThreadBySlug(slug, newThread.Message, newThread.Title)
+
+	}
+
+	if respBody, err := json.Marshal(thread); err != nil {
+
+		sendInternalError(ctx, err)
+	} else {
+		ctx.SetStatusCode(fasthttp.StatusOK)
+		ctx.Write(respBody)
+	}
+}

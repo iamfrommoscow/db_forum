@@ -216,3 +216,81 @@ func GetThreadByID(id string) *models.Thread {
 		return &thread
 	}
 }
+
+const UpdateThreadQuery = `UPDATE threads
+SET
+	message = $2, 
+	title = $3
+WHERE
+	lower(slug) = lower($1)
+RETURNING
+	author,
+	created,
+	forum,
+	message,
+	title,
+	slug,
+	id
+`
+
+func UpdateThreadBySlug(slug string, message string, title string) *models.Thread {
+	transaction := database.StartTransaction()
+	defer transaction.Commit()
+	var thread models.Thread
+	var created time.Time
+	if err := transaction.QueryRow(UpdateThreadQuery, slug, message, title).Scan(&thread.Author, &created, &thread.Forum, &thread.Message, &thread.Title, &thread.Slug, &thread.ID); err != nil {
+		fmt.Println(err)
+		// fmt.Println(UpdateThreadQuery)
+		// fmt.Println(slug)
+		// fmt.Println(message)
+		// fmt.Println(title)
+		// fmt.Println("")
+		return nil
+	} else {
+
+		// thread.Message = message
+		// fmt.Println(thread.Message)
+		// thread.Title = title
+		thread.Created = created.Format("2006-01-02T15:04:05.000Z07:00")
+		return &thread
+	}
+}
+
+const UpdateThreadQueryID = `UPDATE threads
+SET
+	message = $2, 
+	title = $3
+WHERE
+	id = $1
+RETURNING
+	author,
+	created,
+	forum,
+	message,
+	title,
+	slug,
+	id
+`
+
+func UpdateThreadByID(slug string, message string, title string) *models.Thread {
+	transaction := database.StartTransaction()
+	defer transaction.Commit()
+	var thread models.Thread
+	var created time.Time
+	if err := transaction.QueryRow(UpdateThreadQueryID, slug, message, title).Scan(&thread.Author, &created, &thread.Forum, &thread.Message, &thread.Title, &thread.Slug, &thread.ID); err != nil {
+		fmt.Println(err)
+		// fmt.Println(UpdateThreadQuery)
+		// fmt.Println(slug)
+		// fmt.Println(message)
+		// fmt.Println(title)
+		// fmt.Println("")
+		return nil
+	} else {
+
+		// thread.Message = message
+		// fmt.Println(thread.Message)
+		// thread.Title = title
+		thread.Created = created.Format("2006-01-02T15:04:05.000Z07:00")
+		return &thread
+	}
+}
