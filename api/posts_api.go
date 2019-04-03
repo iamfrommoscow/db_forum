@@ -176,7 +176,6 @@ func GetPost(ctx *fasthttp.RequestCtx) {
 
 	if string(related) == "user" {
 		user := helpers.FindByNickname(post.Author)
-		fmt.Println("user", user)
 		rPost.Author = user
 		if respBody, err := json.Marshal(rPost); err != nil {
 
@@ -194,6 +193,23 @@ func GetPost(ctx *fasthttp.RequestCtx) {
 		thread := helpers.GetThreadByID(strconv.Itoa(post.Thread))
 		fmt.Println("thread", thread)
 		rPost.Thrd = thread
+
+		if respBody, err := json.Marshal(rPost); err != nil {
+
+			sendInternalError(ctx, err)
+		} else {
+			ctx.Write(respBody)
+			ctx.SetStatusCode(fasthttp.StatusOK)
+		}
+		return
+	}
+
+	if string(related) == "user,thread" {
+
+		thread := helpers.GetThreadByID(strconv.Itoa(post.Thread))
+		rPost.Thrd = thread
+		user := helpers.FindByNickname(post.Author)
+		rPost.Author = user
 		if respBody, err := json.Marshal(rPost); err != nil {
 
 			sendInternalError(ctx, err)
@@ -226,10 +242,11 @@ func UpdatePost(ctx *fasthttp.RequestCtx) {
 		sendInternalError(ctx, err)
 	}
 	var post *models.Post
-	if newPost.Message == "" {
-		post = helpers.GetPostById(id)
-	} else {
-		post = helpers.UpdatePostById(id, newPost.Message)
+	post = helpers.GetPostById(id)
+	if newPost.Message != "" && post != nil {
+		if newPost.Message != post.Message {
+			post = helpers.UpdatePostById(id, newPost.Message)
+		}
 
 	}
 
@@ -266,6 +283,21 @@ func UpdatePost(ctx *fasthttp.RequestCtx) {
 		thread := helpers.GetThreadByID(strconv.Itoa(post.Thread))
 		fmt.Println("thread", thread)
 		rPost.Thrd = thread
+		if respBody, err := json.Marshal(rPost); err != nil {
+
+			sendInternalError(ctx, err)
+		} else {
+			ctx.Write(respBody)
+			ctx.SetStatusCode(fasthttp.StatusOK)
+		}
+		return
+	}
+	if string(related) == "user,thread" {
+
+		thread := helpers.GetThreadByID(strconv.Itoa(post.Thread))
+		rPost.Thrd = thread
+		user := helpers.FindByNickname(post.Author)
+		rPost.Author = user
 		if respBody, err := json.Marshal(rPost); err != nil {
 
 			sendInternalError(ctx, err)
