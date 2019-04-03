@@ -200,7 +200,8 @@ SELECT author,
 		message,
 		title,
 		slug,
-		id
+		id,
+		votes
 FROM threads
 WHERE id = $1`
 
@@ -209,8 +210,9 @@ func GetThreadByID(id string) *models.Thread {
 	defer transaction.Commit()
 	var thread models.Thread
 	var created time.Time
-	if err := transaction.QueryRow(selectThreadByID, id).Scan(&thread.Author, &created, &thread.Forum, &thread.Message, &thread.Title, &thread.Slug, &thread.ID); err != nil {
-		fmt.Println(err)
+	if err := transaction.QueryRow(selectThreadByID, id).Scan(&thread.Author, &created, &thread.Forum, &thread.Message, &thread.Title, &thread.Slug, &thread.ID, &thread.Votes); err != nil {
+		fmt.Println(id)
+		fmt.Println("GTBID", err)
 		return nil
 	} else {
 		thread.Created = created.Format("2006-01-02T15:04:05.000Z07:00")

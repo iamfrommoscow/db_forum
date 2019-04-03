@@ -181,7 +181,30 @@ func VoteForThread(ctx *fasthttp.RequestCtx) {
 		}
 		return
 	}
-	ctx.SetStatusCode(fasthttp.StatusOK)
+	var newVote models.Vote
+	if err := json.Unmarshal(ctx.PostBody(), &newVote); err != nil {
+
+	}
+	thread = helpers.VoteForThread(thread.ID, &newVote)
+	if thread == nil {
+		var errorMessage = models.Error{
+			Message: "Can't find thread by slug:" + slug,
+		}
+		if respBody, err := json.Marshal(errorMessage); err != nil {
+			sendInternalError(ctx, err)
+		} else {
+			ctx.SetStatusCode(fasthttp.StatusNotFound)
+			ctx.Write(respBody)
+		}
+		return
+	}
+	if respBody, err := json.Marshal(thread); err != nil {
+		sendInternalError(ctx, err)
+	} else {
+		ctx.SetStatusCode(fasthttp.StatusOK)
+		ctx.Write(respBody)
+	}
+	return
 }
 
 func UpdateThread(ctx *fasthttp.RequestCtx) {
