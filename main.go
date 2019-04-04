@@ -51,6 +51,9 @@ func main() {
 	router.GET("/api/post/:id/details", api.GetPost)
 	router.POST("/api/post/:id/details", api.UpdatePost)
 
+	router.GET("/api/service/status", api.Status)
+	router.POST("/api/service/clear", api.Clear)
+
 	Connect()
 	if err := fasthttp.ListenAndServe(":5000", router.Handler); err != nil {
 		log.Fatalf("error in ListenAndServe: %s", err)

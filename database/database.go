@@ -38,3 +38,9 @@ func StartTransaction() *pgx.Tx {
 		return transaction
 	}
 }
+
+func Exec(queryStr string) error {
+	_, err := Connection.Exec(queryStr)
+	return err
+
+}
