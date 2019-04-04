@@ -74,3 +74,35 @@ func GetForum(ctx *fasthttp.RequestCtx) {
 		ctx.Write(respBody)
 	}
 }
+
+func GetUsersByForum(ctx *fasthttp.RequestCtx) {
+	ctx.SetContentType("application/json")
+
+	slug := ctx.UserValue("slug").(string)
+	limit, desc, since := ctx.QueryArgs().Peek("limit"), ctx.QueryArgs().Peek("desc"), ctx.QueryArgs().Peek("since")
+	forum := helpers.FindBySlug(slug)
+	if forum == nil {
+		var errorMessage = models.Error{
+			Message: "Can't find forum by slug:" + slug,
+		}
+		if respBody, err := json.Marshal(errorMessage); err != nil {
+			sendInternalError(ctx, err)
+		} else {
+			ctx.SetStatusCode(fasthttp.StatusNotFound)
+			ctx.Write(respBody)
+		}
+		return
+	}
+	users := helpers.GetUsersBySlug(slug, limit, desc, since)
+	if len(users) == 0 {
+		users = make([]*models.User, 0)
+
+	}
+	if respBody, err := json.Marshal(users); err != nil {
+
+		sendInternalError(ctx, err)
+	} else {
+		ctx.SetStatusCode(fasthttp.StatusOK)
+		ctx.Write(respBody)
+	}
+}
