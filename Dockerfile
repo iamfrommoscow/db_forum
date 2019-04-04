@@ -1,11 +1,12 @@
-FROM golang as build
+FROM golang:1.12-stretch as build
 
 WORKDIR /app
 COPY . .
-RUN go get -d & go build -v
+RUN go get -d && go build -v
 
 FROM ubuntu:18.04
 ENV DEBIAN_FRONTEND=noninteractive 
+EXPOSE 5000
 RUN apt-get update && apt-get install -y postgresql-10
 
 USER postgres
