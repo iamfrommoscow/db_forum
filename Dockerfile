@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y postgresql-10
 
 USER postgres
 
+
 RUN service postgresql start &&\
     psql --command "CREATE USER docker WITH SUPERUSER PASSWORD 'docker';" &&\
     createdb -O docker docker &&\

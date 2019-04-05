@@ -87,7 +87,6 @@ func FindByNickname(nickname string) *models.User {
 		var user models.User
 		if err := database.Connection.QueryRow(selectByNickname, nickname).Scan(&user.Nickname, &user.Email, &user.Fullname, &user.About); err != nil {
 			transaction.Rollback()
-			fmt.Println("FUCK IT", err)
 			return nil
 		} else {
 			transaction.Commit()
