@@ -1,8 +1,10 @@
 package helpers
 
 import (
-	"github.com/iamfrommoscow/db_forum/database"
-	"github.com/iamfrommoscow/db_forum/models"
+	"db_forum/database"
+	"fmt"
+
+	"db_forum/models"
 )
 
 const insertUser = `
@@ -15,6 +17,8 @@ func CreateUser(newUser *models.User) error {
 
 	if _, err := transaction.Exec(insertUser, newUser.Nickname, newUser.Email, newUser.Fullname, newUser.About); err != nil {
 		transaction.Rollback()
+		fmt.Println(newUser.Nickname, "<-user")
+		fmt.Println("newUser", err)
 		return err
 	}
 	return nil
@@ -30,8 +34,11 @@ func FindByNicknameOrEmail(nickname string, email string) []*models.User {
 	var users []*models.User
 	transaction := database.StartTransaction()
 	defer transaction.Commit()
+	fmt.Println(nickname)
+	fmt.Println(email)
 
 	if elements, err := transaction.Query(selectByNicknameOrEmail, nickname, email); err != nil {
+		fmt.Println("selectByNicknameOrEmail", err)
 		return users
 	} else {
 		for elements.Next() {
@@ -41,6 +48,8 @@ func FindByNicknameOrEmail(nickname string, email string) []*models.User {
 				&user.Email,
 				&user.Fullname,
 				&user.About); err != nil {
+				fmt.Println("selectByNicknameOrEmail2", err)
+
 				return users
 			}
 			users = append(users, &user)

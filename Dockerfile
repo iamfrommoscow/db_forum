@@ -1,6 +1,6 @@
 FROM golang:1.12-stretch as build
 
-WORKDIR /app
+WORKDIR /db_forum
 COPY . .
 RUN go get -d && go build -v
 
@@ -25,9 +25,9 @@ RUN echo "unix_socket_directories = '/var/run/postgresql'" >> /etc/postgresql/10
 VOLUME  ["/etc/postgresql", "/var/log/postgresql", "/var/lib/postgresql"]
 
 COPY createDB.sql .
-COPY --from=build /app/app .
+COPY --from=build /db_forum .
 
-CMD service postgresql start && ./app
+CMD service postgresql start && ./db_forum
 
 
 

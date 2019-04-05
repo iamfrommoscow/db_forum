@@ -3,7 +3,8 @@ package api
 import (
 	"encoding/json"
 
-	"github.com/iamfrommoscow/db_forum/helpers"
+	"db_forum/helpers"
+
 	"github.com/valyala/fasthttp"
 )
 

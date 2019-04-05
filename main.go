@@ -3,14 +3,18 @@ package main
 import (
 	"log"
 
+	"db_forum/api"
+
+	"db_forum/database"
+
 	"github.com/buaazp/fasthttprouter"
-	"github.com/iamfrommoscow/db_forum/api"
-	"github.com/iamfrommoscow/db_forum/database"
 	"github.com/valyala/fasthttp"
 )
 
 func main() {
+
 	router := fasthttprouter.New()
+
 	router.POST("/api/user/:nickname/create", api.CreateUser)
 	router.GET("/api/user/:nickname/profile", api.GetProfile)
 	router.POST("/api/user/:nickname/profile", api.UpdateProfile)
@@ -33,7 +37,9 @@ func main() {
 	router.POST("/api/service/clear", api.Clear)
 
 	database.Connect()
+
 	if err := fasthttp.ListenAndServe(":5000", router.Handler); err != nil {
 		log.Fatalf("error in ListenAndServe: %s", err)
 	}
+
 }

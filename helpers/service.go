@@ -3,8 +3,9 @@ package helpers
 import (
 	"fmt"
 
-	"github.com/iamfrommoscow/db_forum/database"
-	"github.com/iamfrommoscow/db_forum/models"
+	"db_forum/database"
+
+	"db_forum/models"
 )
 
 const countUsers = `

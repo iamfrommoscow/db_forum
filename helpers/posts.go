@@ -5,8 +5,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/iamfrommoscow/db_forum/database"
-	"github.com/iamfrommoscow/db_forum/models"
+	"db_forum/database"
+
+	"db_forum/models"
+
 	"github.com/jackc/pgx"
 )
 
