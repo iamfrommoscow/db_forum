@@ -117,7 +117,7 @@ func VoteFound(id int, vote *models.Vote) *models.Vote {
 	transaction := database.StartTransaction()
 	defer transaction.Commit()
 	var prevVote models.Vote
-	err := transaction.QueryRow(findVoteByUserAndId, id, vote.Nickname).Scan(&prevVote.Thread, &prevVote.Nickname, &prevVote.Voice)
+	err := database.Connection.QueryRow(findVoteByUserAndId, id, vote.Nickname).Scan(&prevVote.Thread, &prevVote.Nickname, &prevVote.Voice)
 	fmt.Println("vf ", err)
 	return &prevVote
 }
@@ -163,7 +163,7 @@ func VoteForThread(id int, vote *models.Vote) *models.Thread {
 		}
 		fmt.Println("1")
 		if vote.Voice > 0 {
-			if err := transaction.QueryRow(like, id).Scan(&thread.Author, &created, &thread.Forum, &thread.Message, &thread.Title, &thread.Slug, &thread.ID, &thread.Votes); err != nil {
+			if err := database.Connection.QueryRow(like, id).Scan(&thread.Author, &created, &thread.Forum, &thread.Message, &thread.Title, &thread.Slug, &thread.ID, &thread.Votes); err != nil {
 				fmt.Println("11", err)
 				return nil
 			} else {
@@ -171,7 +171,7 @@ func VoteForThread(id int, vote *models.Vote) *models.Thread {
 				return &thread
 			}
 		} else {
-			if err := transaction.QueryRow(dislike, id).Scan(&thread.Author, &created, &thread.Forum, &thread.Message, &thread.Title, &thread.Slug, &thread.ID, &thread.Votes); err != nil {
+			if err := database.Connection.QueryRow(dislike, id).Scan(&thread.Author, &created, &thread.Forum, &thread.Message, &thread.Title, &thread.Slug, &thread.ID, &thread.Votes); err != nil {
 				fmt.Println("12", err)
 				return nil
 			} else {
@@ -188,7 +188,7 @@ func VoteForThread(id int, vote *models.Vote) *models.Thread {
 		if err != nil {
 			return nil
 		}
-		if err := transaction.QueryRow(minus2, id).Scan(&thread.Author, &created, &thread.Forum, &thread.Message, &thread.Title, &thread.Slug, &thread.ID, &thread.Votes); err != nil {
+		if err := database.Connection.QueryRow(minus2, id).Scan(&thread.Author, &created, &thread.Forum, &thread.Message, &thread.Title, &thread.Slug, &thread.ID, &thread.Votes); err != nil {
 			fmt.Println(err)
 			return nil
 		} else {
@@ -200,7 +200,7 @@ func VoteForThread(id int, vote *models.Vote) *models.Thread {
 		if err != nil {
 			return nil
 		}
-		if err := transaction.QueryRow(plus2, id).Scan(&thread.Author, &created, &thread.Forum, &thread.Message, &thread.Title, &thread.Slug, &thread.ID, &thread.Votes); err != nil {
+		if err := database.Connection.QueryRow(plus2, id).Scan(&thread.Author, &created, &thread.Forum, &thread.Message, &thread.Title, &thread.Slug, &thread.ID, &thread.Votes); err != nil {
 			fmt.Println(err)
 			return nil
 		} else {

@@ -10,14 +10,16 @@ import (
 var connectionConfig = pgx.ConnConfig{
 	Host:     "localhost",
 	Port:     5432,
-	Database: "postgres",
-	User:     "postgres",
-	Password: "postgres",
+	Database: "docker",
+	User:     "docker",
+	Password: "docker",
+	// Database: "db_forum",
+	// User:     "iamfrommoscow",
 }
 
 var connectionPoolConfig = pgx.ConnPoolConfig{
 	ConnConfig:     connectionConfig,
-	MaxConnections: 8,
+	MaxConnections: 1000,
 }
 
 func Connect() *pgx.ConnPool {
@@ -54,6 +56,7 @@ func StartTransaction() *pgx.Tx {
 
 func Exec(queryStr string) error {
 	_, err := Connection.Exec(queryStr)
+
 	return err
 
 }

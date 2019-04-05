@@ -21,16 +21,16 @@ func GetCount() *models.Service {
 	transaction := database.StartTransaction()
 	defer transaction.Rollback()
 	var service models.Service
-	if err := transaction.QueryRow(countUsers).Scan(&service.Users); err != nil {
+	if err := database.Connection.QueryRow(countUsers).Scan(&service.Users); err != nil {
 		fmt.Println(err)
 	}
-	if err := transaction.QueryRow(countThreads).Scan(&service.Threads); err != nil {
+	if err := database.Connection.QueryRow(countThreads).Scan(&service.Threads); err != nil {
 		fmt.Println(err)
 	}
-	if err := transaction.QueryRow(countForums).Scan(&service.Forums); err != nil {
+	if err := database.Connection.QueryRow(countForums).Scan(&service.Forums); err != nil {
 		fmt.Println(err)
 	}
-	if err := transaction.QueryRow(countPosts).Scan(&service.Posts); err != nil {
+	if err := database.Connection.QueryRow(countPosts).Scan(&service.Posts); err != nil {
 		fmt.Println(err)
 	}
 	return &service

@@ -38,14 +38,38 @@ WHERE slug = $1`
 
 func FindBySlug(slug string) *models.Forum {
 	transaction := database.StartTransaction()
-	defer transaction.Commit()
 	var forum models.Forum
-	if err := transaction.QueryRow(selectBySlug, slug).Scan(&forum.Slug, &forum.Title, &forum.User); err != nil {
 
-		return nil
-	} else {
+	if elements, err := database.Connection.Query(selectBySlug, slug); err != nil {
+		fmt.Println("selectBySlug", err)
+		transaction.Rollback()
+		elements.Close()
+
 		return &forum
+	} else {
+		defer elements.Close()
+
+		for elements.Next() {
+			if err := elements.Scan(
+				&forum.Slug,
+				&forum.Title,
+				&forum.User); err != nil {
+				fmt.Println("selectBySlug2", err)
+				transaction.Rollback()
+				return &forum
+			}
+			return &forum
+		}
 	}
+	// if err := database.Connection.QueryRow(selectBySlug, slug).Scan(&forum.Slug, &forum.Title, &forum.User); err != nil {
+	// 	transaction.Rollback()
+	// 	fmt.Println("FindBySlugForum", err)
+	// 	return nil
+	// } else {
+	// 	transaction.Commit()
+	// 	return &forum
+	// }
+	return nil
 }
 
 const postsCount = `
@@ -56,7 +80,7 @@ func GetPostsCountByForum(slug string) int {
 	transaction := database.StartTransaction()
 	defer transaction.Commit()
 	var count int
-	if err := transaction.QueryRow(postsCount, slug).Scan(&count); err != nil {
+	if err := database.Connection.QueryRow(postsCount, slug).Scan(&count); err != nil {
 		fmt.Println(err)
 		return 0
 	} else {
@@ -72,7 +96,7 @@ func GetThreadsCountByForum(slug string) int {
 	transaction := database.StartTransaction()
 	defer transaction.Commit()
 	var count int
-	if err := transaction.QueryRow(threadsCount, slug).Scan(&count); err != nil {
+	if err := database.Connection.QueryRow(threadsCount, slug).Scan(&count); err != nil {
 		fmt.Println(err)
 		return 0
 	} else {
@@ -127,18 +151,20 @@ func GetUsersBySlug(slug string, limit []byte, desc []byte, since []byte) []*mod
 	if len(since) > 0 {
 
 		if len(limit) > 0 {
-			elements, err = transaction.Query(QueryString, slug, string(limit), string(since))
+			elements, err = database.Connection.Query(QueryString, slug, string(limit), string(since))
 		} else {
-			elements, err = transaction.Query(QueryString, slug, string(limit), string(since))
+			elements, err = database.Connection.Query(QueryString, slug, string(limit), string(since))
 		}
 	} else {
 		if len(limit) > 0 {
-			elements, err = transaction.Query(QueryString, slug, string(limit))
+			elements, err = database.Connection.Query(QueryString, slug, string(limit))
 		} else {
-			elements, err = transaction.Query(QueryString, slug)
+			elements, err = database.Connection.Query(QueryString, slug)
 		}
 
 	}
+	defer elements.Close()
+
 	if err != nil {
 
 		// fmt.Println(slug)

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"db_forum/api"
@@ -37,6 +38,7 @@ func main() {
 	router.POST("/api/service/clear", api.Clear)
 
 	database.Connect()
+	fmt.Println("Connected")
 
 	if err := fasthttp.ListenAndServe(":5000", router.Handler); err != nil {
 		log.Fatalf("error in ListenAndServe: %s", err)

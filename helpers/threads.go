@@ -43,7 +43,7 @@ func CreateThread(thread *models.Thread) (int, error) {
 	transaction := database.StartTransaction()
 	defer transaction.Commit()
 	var threadID int
-	if err := transaction.QueryRow(selectCount).Scan(&threadID); err != nil {
+	if err := database.Connection.QueryRow(selectCount).Scan(&threadID); err != nil {
 		fmt.Println(err)
 		return -1, err
 	}
@@ -127,12 +127,14 @@ func GetThreadsByForum(slug string, limit []byte, desc []byte, since []byte) []*
 	var elements *pgx.Rows
 	var err error
 	if len(since) > 0 {
-		elements, err = transaction.Query(QueryString, slug, string(limit), string(since))
+		elements, err = database.Connection.Query(QueryString, slug, string(limit), string(since))
 	} else {
 
-		elements, err = transaction.Query(QueryString, slug, string(limit))
+		elements, err = database.Connection.Query(QueryString, slug, string(limit))
 
 	}
+	defer elements.Close()
+
 	if err != nil {
 
 		// fmt.Println(slug)
@@ -186,7 +188,7 @@ func GetThreadBySlug(slug string) *models.Thread {
 	defer transaction.Commit()
 	var thread models.Thread
 	var created time.Time
-	if err := transaction.QueryRow(selectThreadBySlug, slug).Scan(&thread.Author, &created, &thread.Forum, &thread.Message, &thread.Title, &thread.Slug, &thread.ID); err != nil {
+	if err := database.Connection.QueryRow(selectThreadBySlug, slug).Scan(&thread.Author, &created, &thread.Forum, &thread.Message, &thread.Title, &thread.Slug, &thread.ID); err != nil {
 
 		return nil
 	} else {
@@ -212,7 +214,7 @@ func GetThreadByID(id string) *models.Thread {
 	defer transaction.Commit()
 	var thread models.Thread
 	var created time.Time
-	if err := transaction.QueryRow(selectThreadByID, id).Scan(&thread.Author, &created, &thread.Forum, &thread.Message, &thread.Title, &thread.Slug, &thread.ID, &thread.Votes); err != nil {
+	if err := database.Connection.QueryRow(selectThreadByID, id).Scan(&thread.Author, &created, &thread.Forum, &thread.Message, &thread.Title, &thread.Slug, &thread.ID, &thread.Votes); err != nil {
 		fmt.Println(id)
 		fmt.Println("GTBID", err)
 		return nil
@@ -243,7 +245,7 @@ func UpdateThreadBySlug(slug string, message string, title string) *models.Threa
 	defer transaction.Commit()
 	var thread models.Thread
 	var created time.Time
-	if err := transaction.QueryRow(UpdateThreadQuery, slug, message, title).Scan(&thread.Author, &created, &thread.Forum, &thread.Message, &thread.Title, &thread.Slug, &thread.ID); err != nil {
+	if err := database.Connection.QueryRow(UpdateThreadQuery, slug, message, title).Scan(&thread.Author, &created, &thread.Forum, &thread.Message, &thread.Title, &thread.Slug, &thread.ID); err != nil {
 		fmt.Println(err)
 		// fmt.Println(UpdateThreadQuery)
 		// fmt.Println(slug)
@@ -282,7 +284,7 @@ func UpdateThreadByID(slug string, message string, title string) *models.Thread 
 	defer transaction.Commit()
 	var thread models.Thread
 	var created time.Time
-	if err := transaction.QueryRow(UpdateThreadQueryID, slug, message, title).Scan(&thread.Author, &created, &thread.Forum, &thread.Message, &thread.Title, &thread.Slug, &thread.ID); err != nil {
+	if err := database.Connection.QueryRow(UpdateThreadQueryID, slug, message, title).Scan(&thread.Author, &created, &thread.Forum, &thread.Message, &thread.Title, &thread.Slug, &thread.ID); err != nil {
 		fmt.Println(err)
 		// fmt.Println(UpdateThreadQuery)
 		// fmt.Println(slug)

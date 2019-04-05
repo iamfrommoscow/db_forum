@@ -37,7 +37,7 @@ func InsertPosts(posts []*models.Post) error {
 	transaction := database.StartTransaction()
 	defer transaction.Commit()
 	var postID int
-	if err := transaction.QueryRow(selectPostsCount).Scan(&postID); err != nil {
+	if err := database.Connection.QueryRow(selectPostsCount).Scan(&postID); err != nil {
 		// fmt.Println(err)
 		return err
 	}
@@ -113,12 +113,13 @@ func GetPostsTree(slug int, limit []byte, sort []byte, desc []byte, since []byte
 	var elements *pgx.Rows
 	var err error
 	if len(since) == 0 {
-		elements, err = transaction.Query(QueryString, slug, string(limit), parent)
+		elements, err = database.Connection.Query(QueryString, slug, string(limit), parent)
 	} else {
 
-		elements, err = transaction.Query(QueryString, slug, parent)
+		elements, err = database.Connection.Query(QueryString, slug, parent)
 
 	}
+	defer elements.Close()
 
 	if err != nil {
 
@@ -240,10 +241,11 @@ func GetPostsByThread(slug int, limit []byte, sort []byte, since []byte, desc []
 	var err error
 	if len(since) > 0 {
 
-		elements, err = transaction.Query(QueryString, slug, string(limit), string(since))
+		elements, err = database.Connection.Query(QueryString, slug, string(limit), string(since))
 	} else {
-		elements, err = transaction.Query(QueryString, slug, string(limit))
+		elements, err = database.Connection.Query(QueryString, slug, string(limit))
 	}
+	defer elements.Close()
 
 	if err != nil {
 
@@ -300,7 +302,7 @@ func GetPostById(id int) *models.Post {
 	defer transaction.Commit()
 	var post models.Post
 	var created time.Time
-	if err := transaction.QueryRow(selectPostByID, id).Scan(&post.Author, &created, &post.Forum, &post.Message, &post.Thread, &post.Parent, &post.ID, &post.IsEdited); err != nil {
+	if err := database.Connection.QueryRow(selectPostByID, id).Scan(&post.Author, &created, &post.Forum, &post.Message, &post.Thread, &post.Parent, &post.ID, &post.IsEdited); err != nil {
 		fmt.Println(err)
 		return nil
 	} else {
@@ -331,7 +333,7 @@ func UpdatePostById(id int, message string) *models.Post {
 	defer transaction.Commit()
 	var post models.Post
 	var created time.Time
-	if err := transaction.QueryRow(UpdatePostQuery, id, message).Scan(&post.Author, &created, &post.Forum, &post.Message, &post.Thread, &post.Parent, &post.ID, &post.IsEdited); err != nil {
+	if err := database.Connection.QueryRow(UpdatePostQuery, id, message).Scan(&post.Author, &created, &post.Forum, &post.Message, &post.Thread, &post.Parent, &post.ID, &post.IsEdited); err != nil {
 		fmt.Println(err)
 		return nil
 	} else {
