@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"db_forum/helpers"
 
@@ -70,6 +71,8 @@ func GetProfile(ctx *fasthttp.RequestCtx) {
 }
 
 func UpdateProfile(ctx *fasthttp.RequestCtx) {
+	fmt.Println("POSTPOSTPOSTPOSTPOSTPOST")
+
 	ctx.SetContentType("application/json")
 
 	var user models.User
@@ -90,6 +93,15 @@ func UpdateProfile(ctx *fasthttp.RequestCtx) {
 			ctx.Write(respBody)
 		}
 		return
+	}
+	if user.Email == "" {
+		user.Email = findedUser.Email
+	}
+	if user.About == "" {
+		user.About = findedUser.About
+	}
+	if user.Fullname == "" {
+		user.Fullname = findedUser.Fullname
 	}
 	if err := helpers.UpdateProfile(&user); err != nil {
 		sameEmailUser := helpers.FindByEmail(user.Email)
